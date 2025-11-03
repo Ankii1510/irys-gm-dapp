@@ -1,0 +1,44 @@
+{
+  "name": "blockchain-dapp",
+  "version": "1.0.0",
+  "description": "Blockchain transaction dApp - No private keys needed!",
+  "main": "send-gm.js",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "start": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "dev:old": "npx http-server . -p 8080 -o",
+    "send-gm": "node send-gm.js",
+    "send": "node send-transaction.js",
+    "deploy": "node deploy-contract.js"
+  },
+  "keywords": [
+    "blockchain",
+    "dapp",
+    "metamask",
+    "ethereum",
+    "testnet"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@irys/sdk": "^0.2.11",
+    "@irys/web-upload": "^0.0.15",
+    "@irys/web-upload-ethereum": "^0.0.16",
+    "@irys/web-upload-ethereum-ethers-v6": "^0.0.16",
+    "dotenv": "^16.3.1",
+    "ethers": "^6.9.0"
+  },
+  "devDependencies": {
+    "buffer": "^6.0.3",
+    "crypto-browserify": "^3.12.1",
+    "events": "^3.3.0",
+    "http-server": "^14.1.1",
+    "stream-browserify": "^3.0.0",
+    "util": "^0.12.5",
+    "vite": "^7.1.12",
+    "vite-plugin-node-polyfills": "^0.24.0"
+  }
+}

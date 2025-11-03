@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Irys GM dApp - Send GM Messages</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .wallet-selector {
+            margin-bottom: 20px;
+        }
+
+        .wallet-option {
+            padding: 12px;
+            margin: 8px 0;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: white;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .wallet-option:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .wallet-option.selected {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .wallet-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #667eea;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .info-box {
+            background: #f0f4ff;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+
+        .info-box h3 {
+            color: #667eea;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+
+        .info-box p {
+            color: #555;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .wallet-section {
+            margin-bottom: 30px;
+        }
+
+        .wallet-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .wallet-info p {
+            margin: 5px 0;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .wallet-info strong {
+            color: #667eea;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 15px;
+        }
+
+        .connect-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .connect-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .connect-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .send-btn {
+            background: #28a745;
+            color: white;
+        }
+
+        .send-btn:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .send-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 14px;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .link {
+            color: #667eea;
+            text-decoration: none;
+            word-break: break-all;
+        }
+
+        .link:hover {
+            text-decoration: underline;
+        }
+
+        .network-selector {
+            margin-bottom: 20px;
+        }
+
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>👋 Irys GM dApp</h1>
+        <p class="subtitle">Send "GM" messages on Irys Testnet - Choose your wallet!</p>
+
+        <div class="info-box">
+            <h3>💡 About Irys</h3>
+            <p>
+                Irys is a permanent data storage protocol. This dApp allows you to send "GM" messages to Irys testnet 
+                with your preferred wallet. Connect your wallet and send your message!
+            </p>
+        </div>
+
+        <div class="wallet-selector">
+            <label>Select Wallet:</label>
+            <div class="wallet-option" id="walletMetaMask" data-wallet="metamask">
+                <div class="wallet-icon">🦊</div>
+                <div>
+                    <strong>MetaMask</strong>
+                    <div style="font-size: 12px; color: #666;">Browser Extension</div>
+                </div>
+            </div>
+            <div class="wallet-option" id="walletCoinbase" data-wallet="coinbase">
+                <div class="wallet-icon">🔵</div>
+                <div>
+                    <strong>Coinbase Wallet</strong>
+                    <div style="font-size: 12px; color: #666;">Browser Extension</div>
+                </div>
+            </div>
+            <div class="wallet-option" id="walletBrowser" data-wallet="browser">
+                <div class="wallet-icon">🌐</div>
+                <div>
+                    <strong>Browser Wallet</strong>
+                    <div style="font-size: 12px; color: #666;">Any EIP-1193 Provider</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="wallet-section">
+            <button id="connectBtn" class="connect-btn" disabled>Connect Wallet</button>
+            <div id="walletInfo" class="wallet-info" style="display: none;">
+                <p><strong>Wallet:</strong> <span id="walletType"></span></p>
+                <p><strong>Address:</strong> <span id="address"></span></p>
+                <p><strong>Irys Balance:</strong> <span id="balance"></span></p>
+                <p><strong>Network:</strong> <span id="networkInfo"></span></p>
+                <p style="font-size: 12px; margin-top: 10px;">
+                    <a href="https://testnet-explorer.irys.xyz/" target="_blank" class="link" style="font-size: 12px;">
+                        📊 Check Fees & Stats on Explorer
+                    </a>
+                </p>
+            </div>
+        </div>
+
+        <div id="transactionForm" style="display: none;">
+            <div class="info-box" style="margin-bottom: 20px;">
+                <p><strong>Contract Address:</strong> <span id="displayContractAddress" style="font-family: monospace; word-break: break-all;"></span></p>
+            </div>
+            <div class="info-box" style="margin-bottom: 20px; background: #fff3cd; border-left-color: #ffc107;">
+                <p><strong>💡 Need Testnet Tokens?</strong></p>
+                <p style="font-size: 13px; margin-top: 5px;">
+                    If your Irys balance is 0, get free testnet tokens from: 
+                    <a href="https://irys.xyz/faucet" target="_blank" class="link">Irys Testnet Faucet</a><br>
+                    <strong>Note:</strong> If you have IRYS native tokens, the app might be checking for a different token type. 
+                    Get tokens matching the displayed token type from the faucet.
+                </p>
+            </div>
+            <div class="form-group">
+                <label for="message">Message:</label>
+                <input type="text" id="message" value="GM" placeholder="GM" />
+                <small style="color: #666; font-size: 12px;">Your message to send (default: GM)</small>
+            </div>
+            <button id="sendBtn" class="send-btn">Send GM to Irys</button>
+        </div>
+
+        <div id="status"></div>
+    </div>
+
+    <script type="module" src="/app.js"></script>
+</body>
+</html>
+
