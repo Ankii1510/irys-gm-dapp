@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Irys GM dApp - Send GM Messages</title>
+    <title>Irys GM dApp - Send Messages on Irys Testnet</title>
+    <link rel="icon" type="image/webp" href="./Champion_Sprite.webp">
+    <meta name="description" content="Send GM messages on Irys Testnet blockchain using MetaMask or other EIP-1193 compatible wallets">
+    <meta name="keywords" content="Irys, blockchain, dApp, GM, testnet, MetaMask, web3">
     <style>
         * {
             margin: 0;
@@ -248,15 +251,32 @@
 </head>
 <body>
     <div class="container">
-        <h1>👋 Irys GM dApp</h1>
+        <!-- Logo Section -->
+        <div style="text-align: center; margin-bottom: 30px;">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 15px;">
+                <img src="./Champion_Sprite.webp" alt="IRYS" style="max-width: 80px; height: auto; border-radius: 10px;" onerror="this.style.display='none';">
+                <img src="https://irys.xyz/logo.svg" alt="IRYS Logo" style="max-width: 150px; height: auto;" onerror="this.style.display='none';">
+            </div>
+            <h1 style="margin-top: 10px;">👋 Irys GM dApp</h1>
+        </div>
         <p class="subtitle">Send "GM" messages on Irys Testnet - Choose your wallet!</p>
 
-        <div class="info-box">
-            <h3>💡 About Irys</h3>
-            <p>
-                Irys is a permanent data storage protocol. This dApp allows you to send "GM" messages to Irys testnet 
-                with your preferred wallet. Connect your wallet and send your message!
-            </p>
+        <div class="info-box" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; position: relative; overflow: hidden;">
+            <div style="position: absolute; right: -30px; top: -30px; opacity: 0.1;">
+                <img src="./Champion_Sprite.webp" alt="IRYS" style="width: 150px; height: auto; transform: rotate(15deg);" onerror="this.style.display='none';">
+            </div>
+            <div style="position: relative; z-index: 1; display: flex; align-items: center; gap: 15px;">
+                <div style="flex: 0 0 auto;">
+                    <img src="https://irys.xyz/logo.svg" alt="IRYS" style="width: 50px; height: 50px; filter: brightness(0) invert(1);" onerror="this.style.display='none';">
+                </div>
+                <div style="flex: 1;">
+                    <h3 style="margin: 0 0 10px 0; color: white;">💡 About Irys</h3>
+                    <p style="margin: 0; color: rgba(255,255,255,0.95);">
+                        Irys is a permanent data storage protocol. This dApp allows you to send "GM" messages to Irys testnet 
+                        with your preferred wallet. Connect your wallet and send your message!
+                    </p>
+                </div>
+            </div>
         </div>
 
         <div class="wallet-selector">
@@ -318,6 +338,48 @@
                 <small style="color: #666; font-size: 12px;">Your message to send (default: GM)</small>
             </div>
             <button id="sendBtn" class="send-btn">Send GM to Irys</button>
+            
+            <!-- New Features Section -->
+            <div style="margin-top: 30px; border-top: 1px solid #ddd; padding-top: 20px;">
+                <h3 style="margin-bottom: 15px;">📊 Additional Features</h3>
+                
+                <!-- Gas Price Display -->
+                <div class="info-box" style="margin-bottom: 15px;">
+                    <p><strong>⛽ Current Gas Price:</strong> <span id="gasPrice">Loading...</span></p>
+                    <p style="font-size: 12px; margin-top: 5px; color: #666;" id="gasEstimate"></p>
+                </div>
+                
+                <!-- Contract Stats -->
+                <div class="info-box" style="margin-bottom: 15px; position: relative;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                        <img src="https://irys.xyz/logo.svg" alt="IRYS" style="width: 24px; height: 24px;" onerror="this.style.display='none';">
+                        <p style="margin: 0;"><strong>📝 Contract Stats:</strong></p>
+                    </div>
+                    <p style="font-size: 13px; margin-top: 5px;">
+                        Total Messages: <strong><span id="totalMessages">-</span></strong><br>
+                        Your Messages: <strong><span id="yourMessages">-</span></strong>
+                    </p>
+                    <button id="refreshStatsBtn" style="margin-top: 10px; padding: 8px 15px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 12px;">🔄 Refresh Stats</button>
+                </div>
+                
+                <!-- Message History -->
+                <div class="info-box" style="margin-bottom: 15px;">
+                    <p><strong>📜 Message History</strong></p>
+                    <button id="loadMessagesBtn" style="margin-top: 10px; padding: 8px 15px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 12px;">📖 Load Messages (Last 10)</button>
+                    <div id="messageHistory" style="margin-top: 15px; max-height: 300px; overflow-y: auto; display: none;">
+                        <div style="font-size: 12px; color: #666;">Loading messages...</div>
+                    </div>
+                </div>
+                
+                <!-- Transaction History -->
+                <div class="info-box">
+                    <p><strong>💸 Your Transaction History</strong></p>
+                    <button id="clearHistoryBtn" style="margin-top: 10px; padding: 8px 15px; background: #dc3545; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 12px;">🗑️ Clear History</button>
+                    <div id="txHistory" style="margin-top: 15px; max-height: 200px; overflow-y: auto;">
+                        <div style="font-size: 12px; color: #666;">No transactions yet</div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div id="status"></div>

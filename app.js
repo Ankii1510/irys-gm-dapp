@@ -20,6 +20,14 @@ const IRYS_TESTNET = {
 // Contract Address - GMMessageReceiver deployed on Irys Testnet
 const CONTRACT_ADDRESS = '0x9fc9B8893F462B4B9a7c0B12b07d2F3C57C40a53';
 
+// Contract ABI for reading messages
+const CONTRACT_ABI = [
+    "function getMessageCount() external view returns (uint256)",
+    "function getMessage(uint256 index) external view returns (address sender, string memory message, uint256 timestamp, uint256 blockNumber)",
+    "function getSenderMessageCount(address sender) external view returns (uint256)",
+    "event MessageReceived(address indexed sender, string message, uint256 timestamp)"
+];
+
 let provider;        // ethers provider (BrowserProvider)
 let signer;
 let userAddress;
@@ -355,9 +363,11 @@ async function connectWallet() {
         if (displayContractEl) displayContractEl.textContent = CONTRACT_ADDRESS;
         if (networkInfoEl) networkInfoEl.textContent = 'Irys Testnet';
 
-        // Update balance after short delay
+        // Update balance and features after short delay
         setTimeout(async () => {
             await updateBalance();
+            await updateGasPrice();
+            await loadContractStats();
         }, 1000);
 
         if (walletInfo) walletInfo.style.display = 'block';
@@ -517,6 +527,14 @@ async function sendGmMessage() {
         const gasPrice = receipt.gasPrice || await provider.getFeeData().then(f => f.gasPrice) || ethers.parseUnits('1', 'gwei');
         const actualCost = gasUsed * gasPrice;
         const actualCostFormatted = ethers.formatEther(actualCost);
+        
+        // Save to transaction history
+        try {
+            saveTransactionToHistory(receipt.hash, message, actualCostFormatted);
+            console.log('Transaction saved to history:', receipt.hash);
+        } catch (error) {
+            console.error('Error saving transaction to history:', error);
+        }
 
         showStatus(
             `✅ GM message sent successfully!<br>` +
@@ -575,4 +593,246 @@ function showStatus(message, type) {
     statusDiv.className = `status ${type}`;
     statusDiv.innerHTML = message;
     statusDiv.style.display = 'block';
+}
+
+// ==========================================
+// NEW FEATURES FUNCTIONS
+// ==========================================
+
+// Load gas price
+async function updateGasPrice() {
+    try {
+        if (!provider) return;
+        
+        const feeData = await provider.getFeeData();
+        const gasPrice = feeData.gasPrice || ethers.parseUnits('1', 'gwei');
+        const gasPriceFormatted = ethers.formatUnits(gasPrice, 'gwei');
+        
+        const gasEl = document.getElementById('gasPrice');
+        if (gasEl) {
+            gasEl.textContent = `${parseFloat(gasPriceFormatted).toFixed(2)} Gwei`;
+        }
+        
+        // Estimate cost for a typical transaction
+        const estimatedGas = 50000n; // Estimated gas for simple transaction
+        const estimatedCost = gasPrice * estimatedGas;
+        const costFormatted = ethers.formatEther(estimatedCost);
+        
+        const estimateEl = document.getElementById('gasEstimate');
+        if (estimateEl) {
+            estimateEl.textContent = `Estimated cost per transaction: ~${parseFloat(costFormatted).toFixed(6)} IRYS`;
+        }
+    } catch (error) {
+        console.error('Error fetching gas price:', error);
+        const gasEl = document.getElementById('gasPrice');
+        if (gasEl) gasEl.textContent = 'Error loading';
+    }
+}
+
+// Load contract stats
+async function loadContractStats() {
+    try {
+        if (!provider || !userAddress) return;
+        
+        const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+        
+        // Get total messages
+        const totalCount = await contract.getMessageCount();
+        const totalEl = document.getElementById('totalMessages');
+        if (totalEl) totalEl.textContent = totalCount.toString();
+        
+        // Get user's message count
+        const userCount = await contract.getSenderMessageCount(userAddress);
+        const userEl = document.getElementById('yourMessages');
+        if (userEl) userEl.textContent = userCount.toString();
+        
+    } catch (error) {
+        console.error('Error loading contract stats:', error);
+        const totalEl = document.getElementById('totalMessages');
+        const userEl = document.getElementById('yourMessages');
+        if (totalEl) totalEl.textContent = 'Error';
+        if (userEl) userEl.textContent = 'Error';
+    }
+}
+
+// Load message history from contract
+async function loadMessageHistory() {
+    try {
+        if (!provider) {
+            showStatus('Please connect your wallet first.', 'error');
+            return;
+        }
+        
+        const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+        const totalCount = await contract.getMessageCount();
+        
+        const historyEl = document.getElementById('messageHistory');
+        if (!historyEl) return;
+        
+        historyEl.style.display = 'block';
+        historyEl.innerHTML = '<div style="font-size: 12px; color: #666;">Loading messages...</div>';
+        
+        // Load last 10 messages (or all if less than 10)
+        const count = Number(totalCount);
+        const startIndex = Math.max(0, count - 10);
+        const messagesToLoad = count - startIndex;
+        
+        if (messagesToLoad === 0) {
+            historyEl.innerHTML = '<div style="font-size: 12px; color: #666;">No messages found</div>';
+            return;
+        }
+        
+        let html = '<div style="font-size: 11px;">';
+        for (let i = count - 1; i >= startIndex && i >= 0; i--) {
+            try {
+                const [sender, message, timestamp, blockNumber] = await contract.getMessage(i);
+                const date = new Date(Number(timestamp) * 1000);
+                const dateStr = date.toLocaleString();
+                const shortAddr = `${sender.substring(0, 6)}...${sender.substring(38)}`;
+                
+                html += `
+                    <div style="padding: 8px; margin-bottom: 8px; background: #f8f9fa; border-radius: 4px; border-left: 3px solid #007bff;">
+                        <strong>${message}</strong><br>
+                        <span style="color: #666; font-size: 10px;">
+                            From: ${shortAddr} | ${dateStr}<br>
+                            Block: ${blockNumber.toString()}
+                        </span>
+                    </div>
+                `;
+            } catch (err) {
+                console.warn(`Error loading message ${i}:`, err);
+            }
+        }
+        html += '</div>';
+        historyEl.innerHTML = html;
+        
+    } catch (error) {
+        console.error('Error loading message history:', error);
+        const historyEl = document.getElementById('messageHistory');
+        if (historyEl) {
+            historyEl.innerHTML = '<div style="font-size: 12px; color: #dc3545;">Error loading messages</div>';
+        }
+    }
+}
+
+// Load transaction history from localStorage
+function loadTransactionHistory() {
+    try {
+        const txHistoryEl = document.getElementById('txHistory');
+        if (!txHistoryEl) {
+            console.warn('txHistory element not found');
+            return;
+        }
+        
+        const historyStr = localStorage.getItem('txHistory');
+        console.log('Loading transaction history, localStorage:', historyStr);
+        const history = JSON.parse(historyStr || '[]');
+        console.log('Parsed history:', history);
+        
+        if (history.length === 0) {
+            txHistoryEl.innerHTML = '<div style="font-size: 12px; color: #666;">No transactions yet</div>';
+            return;
+        }
+        
+        let html = '<div style="font-size: 11px;">';
+        // Show last 10 transactions, most recent first
+        const recentHistory = history.slice(-10).reverse();
+        recentHistory.forEach(tx => {
+            const date = new Date(tx.timestamp);
+            const hashLink = `${tx.hash.substring(0, 16)}...`;
+            html += `
+                <div style="padding: 8px; margin-bottom: 8px; background: #f8f9fa; border-radius: 4px; border-left: 3px solid #28a745;">
+                    <strong>${tx.message || 'GM'}</strong><br>
+                    <span style="color: #666; font-size: 10px;">
+                        Hash: <a href="${IRYS_EXPLORER}/tx/${tx.hash}" target="_blank" style="color: #007bff; text-decoration: none;">${hashLink}</a><br>
+                        ${date.toLocaleString()} | Cost: ${tx.cost || 'N/A'} IRYS
+                    </span>
+                </div>
+            `;
+        });
+        html += '</div>';
+        txHistoryEl.innerHTML = html;
+        console.log('Transaction history displayed, count:', recentHistory.length);
+    } catch (error) {
+        console.error('Error loading transaction history:', error);
+        const txHistoryEl = document.getElementById('txHistory');
+        if (txHistoryEl) {
+            txHistoryEl.innerHTML = '<div style="font-size: 12px; color: #dc3545;">Error loading history</div>';
+        }
+    }
+}
+
+// Save transaction to history
+function saveTransactionToHistory(txHash, message, cost) {
+    try {
+        console.log('Saving transaction to history:', { txHash, message, cost });
+        const history = JSON.parse(localStorage.getItem('txHistory') || '[]');
+        history.push({
+            hash: txHash,
+            message: message,
+            cost: cost,
+            timestamp: Date.now()
+        });
+        
+        // Keep only last 50 transactions
+        if (history.length > 50) {
+            history.shift();
+        }
+        
+        localStorage.setItem('txHistory', JSON.stringify(history));
+        console.log('Transaction saved, history length:', history.length);
+        
+        // Reload history display
+        loadTransactionHistory();
+    } catch (error) {
+        console.error('Error in saveTransactionToHistory:', error);
+    }
+}
+
+// Initialize new features
+function initializeFeatures() {
+    // Refresh stats button
+    const refreshStatsBtn = document.getElementById('refreshStatsBtn');
+    if (refreshStatsBtn) {
+        refreshStatsBtn.addEventListener('click', async () => {
+            refreshStatsBtn.disabled = true;
+            refreshStatsBtn.textContent = 'Loading...';
+            await loadContractStats();
+            refreshStatsBtn.disabled = false;
+            refreshStatsBtn.textContent = '🔄 Refresh Stats';
+        });
+    }
+    
+    // Load messages button
+    const loadMessagesBtn = document.getElementById('loadMessagesBtn');
+    if (loadMessagesBtn) {
+        loadMessagesBtn.addEventListener('click', async () => {
+            loadMessagesBtn.disabled = true;
+            loadMessagesBtn.textContent = 'Loading...';
+            await loadMessageHistory();
+            loadMessagesBtn.disabled = false;
+            loadMessagesBtn.textContent = '📖 Load Messages (Last 10)';
+        });
+    }
+    
+    // Clear history button
+    const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+    if (clearHistoryBtn) {
+        clearHistoryBtn.addEventListener('click', () => {
+            if (confirm('Clear transaction history?')) {
+                localStorage.removeItem('txHistory');
+                loadTransactionHistory();
+            }
+        });
+    }
+    
+    // Load transaction history on init
+    loadTransactionHistory();
+}
+
+// Call initialize on page load
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeFeatures);
+} else {
+    initializeFeatures();
 }
